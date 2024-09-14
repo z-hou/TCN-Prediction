@@ -1,2 +1,2 @@
-# TCN-Prediction
-Using TCN model to predict the future workload
+# workload-prediction
+Using Deep Learning algorithms to predict vm workload(faststorage data)
