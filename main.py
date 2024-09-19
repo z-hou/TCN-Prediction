@@ -16,25 +16,24 @@ import pickle
 
 def data_split(Time_series_data):
 
+    ##Transpose data into [Batch, input_channel, seq_len]
+    Time_series_data = np.transpose(Time_series_data, (0,2,1))
+    print("Check Time Series data shape: ", Time_series_data.shape)
     test_set_size = int(np.round(0.2 * Time_series_data.shape[0]))
     train_set_size = Time_series_data.shape[0] - (test_set_size)
 
-    train_data = Time_series_data[:train_set_size, :-1, :]
-    train_label = Time_series_data[:train_set_size, -1, :]
+    train_data = Time_series_data[:train_set_size, :, :-4]
+    train_label = Time_series_data[:train_set_size, :, -4:]
 
-    test_data = Time_series_data[train_set_size:, :-1]
-    test_label = Time_series_data[train_set_size:, -1, :]
-
-    ##Transpose data into [Batch, input_channel, seq_len]
-    train_data = np.transpose(train_data, (0,2,1))
-    test_data = np.transpose(test_data, (0,2,1))
+    test_data = Time_series_data[train_set_size:, :, :-4]
+    test_label = Time_series_data[train_set_size:, :, -4:]
 
     print("x_train's shape: ", train_data.shape)
     print("y_train's shape: ", train_label.shape)
     print("x_test's shape: ", test_data.shape)
     print("y_test's shape: ", test_label.shape)
 
-    ### Put in torch dataloader
+    ### Put in torch dataloader ###
     train_dataset = Workload_dataset(train_data, train_label)
     test_dataset = Workload_dataset(test_data, test_label)
     train_loader = DataLoader(train_dataset, batch_size=128, shuffle=True, num_workers=1)
@@ -86,7 +85,10 @@ def train(model, num_epochs, train_loader, test_loader, criterion, optimiser, de
 
         for data in train_loader:
             x_train, y_train = data[0].to(device), data[1].to(device)
+            y_train = torch.reshape(y_train, (-1, 16))
+            #print("Check x_train.size(): ", x_train.size())
             y_train_pred = model(x_train)
+            #print("y_train_pred: ", y_train_pred.size(), " ", y_train.size())
             loss = criterion(y_train_pred, y_train)
             train_loss_epoch += loss
             optimiser.zero_grad()
@@ -102,6 +104,7 @@ def train(model, num_epochs, train_loader, test_loader, criterion, optimiser, de
         with torch.no_grad():
             for test_data in test_loader:
                 x_test, y_test = test_data[0].to(device), test_data[1].to(device)
+                y_test = torch.reshape(y_test, (-1, 16))
                 y_test_pred = model(x_test)
                 loss = criterion(y_test_pred, y_test)
                 eval_loss_epoch += loss
@@ -130,13 +133,30 @@ def evaluation(model, test_loader, device):
 
     #print("check test_pred: ", len(test_pred), test_pred[-1].shape)
     #print("check test_label: ", len(test_label), test_label[-1].shape)
-    test_label = np.concatenate(test_label, axis=0)
+    test_label = np.concatenate(test_label, axis=0).reshape(-1, 16)
     test_pred = np.concatenate(test_pred, axis=0)
+    print("Test label shape: ", test_label.shape, "test_pred shape: ", test_pred.shape)
     print("predcition is: ", test_pred.shape, " | ", test_label.shape)
     rme_value = math.sqrt(mean_squared_error(test_label, test_pred))
-    print('RME value: %.2f RMSE' % (rme_value))
+    print('TOTAL RME value: %.2f RMSE' % (rme_value))
 
-    return test_pred, test_label
+    cpu_label, cpu_pred = test_label[:, :4], test_pred[:, :4]
+    cpu_rme_value = math.sqrt(mean_squared_error(cpu_label, cpu_pred))
+    print('CPU RME value: %.2f RMSE' % (cpu_rme_value))
+
+    mem_label, mem_pred = test_label[:, 4:8], test_pred[:, 4:8]
+    mem_rme_value = math.sqrt(mean_squared_error(mem_label, mem_pred))
+    print('MEMORY RME value: %.2f RMSE' % (mem_rme_value))
+
+    disk_label, disk_pred = test_label[:, 8:12], test_pred[:, 8:12]
+    disk_rme_value = math.sqrt(mean_squared_error(disk_label, disk_pred))
+    print('DISK RME value: %.2f RMSE' % (disk_rme_value))
+
+    net_label, net_pred = test_label[:, 12:], test_pred[:, 12:]
+    net_rme_value = math.sqrt(mean_squared_error(net_label, net_pred))
+    print('NET RME value: %.2f RMSE' % (net_rme_value))
+
+    return cpu_label, cpu_pred, mem_label, mem_pred, disk_label, disk_pred, net_label, net_pred
 
 
 if __name__ == '__main__':
@@ -153,9 +173,11 @@ if __name__ == '__main__':
         print("Load data from original *.CSV file")
         root_data_path = r"/proj/zhou-cognit/users/x_zhozh/project/faststorage/VMmonitoring"
         All_Series, scalers = load_all_csv(root_data_path, 100)
+        np.random.shuffle(All_Series)
+        np.save('./data/workload_series.npy', All_Series)
     print("Check All Series shape: ", All_Series.shape)###
     print("Check All scalers: ", scalers.keys())
-    np.random.shuffle(All_Series)
+    
 
 
     ##TEST
@@ -169,7 +191,7 @@ if __name__ == '__main__':
     train_data, test_data = data_split(All_Series)
 
     num_inputs=4
-    output_size=4
+    output_size=4*4
     num_channels=[32, 32, 32]
 
     num_epochs = 200
@@ -198,12 +220,29 @@ if __name__ == '__main__':
     plt.plot(test_loss_list, color='b', label='test loss curve')
     plt.savefig('CPU_test_loss_curve.jpg')
 
-    test_pred, test_label = evaluation(model, test_data, device)
-    test_pred = np.clip(test_pred, 0, None)
-    test_label = np.clip(test_label, 0, None)
+    cpu_label, cpu_pred, mem_label, mem_pred, disk_label, disk_pred, net_label, net_pred = evaluation(model, test_data, device)
+
+    cpu_label = np.clip(cpu_label, 0, None)
+    cpu_pred = np.clip(cpu_pred, 0, None)
+    mem_label = np.clip(mem_label, 0, None)
+    mem_pred = np.clip(mem_pred, 0, None)
+    disk_label = np.clip(disk_label, 0, None)
+    disk_pred = np.clip(disk_pred, 0, None)
+    net_label = np.clip(net_label, 0, None)
+    net_pred = np.clip(net_pred, 0, None)
 
     ##Get random index for easier visualization
-    indexs = np.random.randint(1, test_pred.shape[0], size=200).tolist()
+    indexs = np.random.randint(1, cpu_label.shape[0], size=10).tolist()
+    print("indexs: ", indexs)
+
+    cpu_pred_v = cpu_pred[indexs].flatten() # shape = (10,4) => (40,)
+    cpu_label_v = cpu_pred[indexs].flatten()
+    mem_label_v = mem_label[indexs].flatten() # shape = (10,4) => (40,)
+    mem_pred_v = mem_pred[indexs].flatten()
+    disk_label_v = disk_label[indexs].flatten() # shape = (10,4) => (40,)
+    disk_pred_v = disk_pred[indexs].flatten()
+    net_label_v = net_label[indexs].flatten() # shape = (10,4) => (40,)
+    net_pred_v = net_pred[indexs].flatten()
 
     fig, axs = plt.subplots(2, 2)
 
@@ -223,22 +262,28 @@ if __name__ == '__main__':
     axs[1, 1].plot(scalers["net_transmit"].transform(test_pred[:,3].reshape(-1,1))[indexs], color='b')
     axs[1, 1].plot(scalers["net_transmit"].transform(test_label[:,3].reshape(-1,1))[indexs], color='g')
     axs[1, 1].set_title('net_transmit')
+
+    plt.tight_layout()
+    plt.savefig('comparision.jpg', dpi=300)
     '''
 
-    axs[0, 0].plot(test_pred[:,0][indexs], color='b')
-    axs[0, 0].plot(test_label[:,0][indexs], color='g')
+
+
+
+    axs[0, 0].plot(cpu_pred_v, color='b')
+    axs[0, 0].plot(cpu_label_v, color='g')
     axs[0, 0].set_title('cpu_usage_percent')
 
-    axs[0, 1].plot(test_pred[:,1][indexs], color='b')
-    axs[0, 1].plot(test_label[:,1][indexs], color='g')
+    axs[0, 1].plot(mem_label_v, color='b')
+    axs[0, 1].plot(mem_pred_v, color='g')
     axs[0, 1].set_title('memory_usage')
 
-    axs[1, 0].plot(test_pred[:,2][indexs], color='b')
-    axs[1, 0].plot(test_label[:,2][indexs], color='g')
+    axs[1, 0].plot(disk_label_v, color='b')
+    axs[1, 0].plot(disk_pred_v, color='g')
     axs[1, 0].set_title('disk_write')
 
-    axs[1, 1].plot(test_pred[:,3][indexs], color='b')
-    axs[1, 1].plot(test_label[:,3][indexs], color='g')
+    axs[1, 1].plot(net_label_v, color='b')
+    axs[1, 1].plot(net_pred_v, color='g')
     axs[1, 1].set_title('net_transmit')
 
     plt.tight_layout()

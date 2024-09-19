@@ -112,7 +112,7 @@ def load_all_csv(root_path, seq_length):
         pickle.dump(scalers_dict, f)
 
     ##Save Data
-    np.save('./data/workload_series.npy', All_Series)
+    #np.save('./data/workload_series.npy', All_Series)
     print(All_Series.shape)
     return All_Series, scalers_dict
 

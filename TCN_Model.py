@@ -23,13 +23,13 @@ class TemporalBlock(nn.Module):
         """
         相当于一个Residual block
 
-        :param n_inputs: int, 输入通道数
-        :param n_outputs: int, 输出通道数
-        :param kernel_size: int, 卷积核尺寸
-        :param stride: int, 步长，一般为1
-        :param dilation: int, 膨胀系数
-        :param padding: int, 填充系数
-        :param dropout: float, dropout比率
+        :param n_inputs: int, input channel numbers
+        :param n_outputs: int, output channel numbers
+        :param kernel_size: int, conv kernel size
+        :param stride: int, 
+        :param dilation: int, dilation coefficient
+        :param padding: int, padding coefficient
+        :param dropout: float, dropout ratio
         """
         super(TemporalBlock, self).__init__()
         self.conv1 = weight_norm(nn.Conv1d(n_inputs, n_outputs, kernel_size,
