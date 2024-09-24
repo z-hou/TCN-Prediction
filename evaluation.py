@@ -72,7 +72,7 @@ if __name__ == '__main__':
     print("indexs: ", indexs)
 
     cpu_pred_v = cpu_pred[indexs].flatten() # shape = (10,4) => (40,)
-    print("Check cpu_pred_v: ", cpu_pred_v)
+    #print("Check cpu_pred_v: ", cpu_pred_v)
     cpu_label_v = cpu_label[indexs].flatten()
     mem_label_v = mem_label[indexs].flatten() # shape = (10,4) => (40,)
     mem_pred_v = mem_pred[indexs].flatten()
