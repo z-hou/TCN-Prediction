@@ -15,7 +15,7 @@ import pickle
 from main import data_split, data_scaler, evaluation
 
 
-
+#indexs:  [8967, 10829, 5735, 16448, 11357, 15307, 10854, 282, 14062, 11271] #random indexes for comparison
 
 if __name__ == '__main__':
 
@@ -68,7 +68,8 @@ if __name__ == '__main__':
     net_pred = np.clip(net_pred, 0, None)
 
     ##Get random index for easier visualization
-    indexs = np.random.randint(1, cpu_label.shape[0], size=10).tolist()
+    #indexs = np.random.randint(1, cpu_label.shape[0], size=10).tolist()
+    indexs = [8967, 10829, 5735, 16448, 11357, 15307, 10854, 282, 14062, 11271]
     print("indexs: ", indexs)
 
     cpu_pred_v = cpu_pred[indexs].flatten() # shape = (10,4) => (40,)

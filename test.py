@@ -3,10 +3,6 @@ import torch
 import pandas as pd
 
 
-
-model_path = ""
-
-
 def inference(model, input):
     predcition = model(input)
 
