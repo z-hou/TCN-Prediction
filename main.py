@@ -137,24 +137,26 @@ def evaluation(model, test_loader, device):
     test_pred = np.concatenate(test_pred, axis=0)
     print("Test label shape: ", test_label.shape, "test_pred shape: ", test_pred.shape)
     print("predcition is: ", test_pred.shape, " | ", test_label.shape)
-    rme_value = math.sqrt(mean_squared_error(test_label, test_pred))
-    print('TOTAL RME value: %.2f RMSE' % (rme_value))
+    #rme_value = math.sqrt(mean_squared_error(test_label, test_pred))
+    #print('TOTAL RME value: %.4f RMSE' % (rme_value))
 
     cpu_label, cpu_pred = test_label[:, :4], test_pred[:, :4]
     cpu_rme_value = math.sqrt(mean_squared_error(cpu_label, cpu_pred))
-    print('CPU RME value: %.2f RMSE' % (cpu_rme_value))
+    print('CPU RME value: %.4f RMSE' % (cpu_rme_value))
 
     mem_label, mem_pred = test_label[:, 4:8], test_pred[:, 4:8]
     mem_rme_value = math.sqrt(mean_squared_error(mem_label, mem_pred))
-    print('MEMORY RME value: %.2f RMSE' % (mem_rme_value))
+    print('MEMORY RME value: %.4f RMSE' % (mem_rme_value))
 
     disk_label, disk_pred = test_label[:, 8:12], test_pred[:, 8:12]
     disk_rme_value = math.sqrt(mean_squared_error(disk_label, disk_pred))
-    print('DISK RME value: %.2f RMSE' % (disk_rme_value))
+    print('DISK RME value: %.4f RMSE' % (disk_rme_value))
 
     net_label, net_pred = test_label[:, 12:], test_pred[:, 12:]
     net_rme_value = math.sqrt(mean_squared_error(net_label, net_pred))
-    print('NET RME value: %.2f RMSE' % (net_rme_value))
+    print('NET RME value: %.4f RMSE' % (net_rme_value))
+
+    print('TOTAL RME value: %.4f RMSE' % ((cpu_rme_value+mem_rme_value+disk_rme_value+net_rme_value)/4))
 
     return cpu_label, cpu_pred, mem_label, mem_pred, disk_label, disk_pred, net_label, net_pred
 

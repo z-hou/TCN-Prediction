@@ -13,7 +13,7 @@ class Chomp1d(nn.Module):
 
     def forward(self, x):
         """
-        裁剪的模块，裁剪多出来的padding
+        clip module
         """
         return x[:, :, :-self.chomp_size].contiguous()
 
@@ -21,7 +21,7 @@ class Chomp1d(nn.Module):
 class TemporalBlock(nn.Module):
     def __init__(self, n_inputs, n_outputs, kernel_size, stride, dilation, padding, dropout=0.2):
         """
-        相当于一个Residual block
+        One TCN block
 
         :param n_inputs: int, input channel numbers
         :param n_outputs: int, output channel numbers
@@ -35,13 +35,13 @@ class TemporalBlock(nn.Module):
         self.conv1 = weight_norm(nn.Conv1d(n_inputs, n_outputs, kernel_size,
                                            stride=stride, padding=padding, dilation=dilation))
         # 经过conv1，输出的size其实是(Batch, input_channel, seq_len + padding)
-        self.chomp1 = Chomp1d(padding)  # 裁剪掉多出来的padding部分，维持输出时间步为seq_len
+        self.chomp1 = Chomp1d(padding)  # 
         self.relu1 = nn.ReLU()
         self.dropout1 = nn.Dropout(dropout)
 
         self.conv2 = weight_norm(nn.Conv1d(n_outputs, n_outputs, kernel_size,
                                            stride=stride, padding=padding, dilation=dilation))
-        self.chomp2 = Chomp1d(padding)  # 裁剪掉多出来的padding部分，维持输出时间步为seq_len
+        self.chomp2 = Chomp1d(padding)  # 
         self.relu2 = nn.ReLU()
         self.dropout2 = nn.Dropout(dropout)
 
@@ -75,19 +75,19 @@ class TemporalBlock(nn.Module):
 class TCN(nn.Module):
     def __init__(self, num_inputs, output_size, num_channels, kernel_size=2, dropout=0.2):
         """
-        :param num_inputs: int， 输入通道数
-        :param channels: list，每层的hidden_channel数，例如[25,25,25,25]表示有4个隐层，每层hidden_channel数为25
-        :param kernel_size: int, 卷积核尺寸
-        :param dropout: float, drop_out比率
+        :param num_inputs: int， input channels
+        :param channels: list，hidden channels of each layer
+        :param kernel_size: int, size of convolution channels
+        :param dropout: float, drop_out ratio
         """
         super(TCN, self).__init__()
         super().__init__()
         layers = []
         num_levels = len(num_channels)
         for i in range(num_levels):
-            dilation_size = 2 ** i  # 膨胀系数：1，2，4，8……
-            in_channels = num_inputs if i == 0 else num_channels[i - 1]  # 确定每一层的输入通道数
-            out_channels = num_channels[i]  # 确定每一层的输出通道数
+            dilation_size = 2 ** i  # dilation coefficient：1，2，4，8……
+            in_channels = num_inputs if i == 0 else num_channels[i - 1]  # input channels at each layer
+            out_channels = num_channels[i]  # the output channels of each layer
             layers += [TemporalBlock(in_channels, out_channels, kernel_size, stride=1, dilation=dilation_size,
                                      padding=(kernel_size - 1) * dilation_size, dropout=dropout)]
 

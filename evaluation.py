@@ -81,6 +81,42 @@ if __name__ == '__main__':
     net_label_v = net_label[indexs].flatten() # shape = (10,4) => (40,)
     net_pred_v = net_pred[indexs].flatten()
 
+    
+    plt.plot(cpu_pred_v,  color='blue', linewidth=2)
+    plt.plot(cpu_label_v, color='green', linewidth=2)  
+    plt.title('Cpu Usage')
+    plt.xlabel('Time steps')
+    plt.ylabel('Cpu Usage')
+    plt.savefig('./visualization_result/cpu_comparision.jpg', dpi=300)
+    plt.close()
+
+    plt.plot(mem_label_v,  color='blue', linewidth=2)
+    plt.plot(mem_pred_v, color='green', linewidth=2)  
+    plt.title('Memory Usage')
+    plt.xlabel('Time steps')
+    plt.ylabel('Memory Usage')
+    plt.savefig('./visualization_result/Mem_comparision.jpg', dpi=300)
+    plt.close()
+
+    plt.plot(disk_label_v,  color='blue', linewidth=2)
+    plt.plot(disk_pred_v, color='green', linewidth=2)  
+    plt.title('Disk Write')
+    plt.xlabel('Time steps')
+    plt.ylabel('Disk Write')
+    plt.savefig('./visualization_result/Disk_comparision.jpg', dpi=300)
+    plt.close()
+
+    plt.plot(net_label_v,  color='blue', linewidth=2)
+    plt.plot(net_pred_v, color='green', linewidth=2)  
+    plt.title('Network received')
+    plt.xlabel('Time steps')
+    plt.ylabel('Network received')
+    plt.savefig('./visualization_result/Net_comparision.jpg', dpi=300)
+    plt.close()
+    
+    print("Saved at visualization result")
+    
+    '''
     fig, axs = plt.subplots(2, 2)
     
     axs[0, 0].plot(cpu_pred_v, color='b')
@@ -101,3 +137,4 @@ if __name__ == '__main__':
 
     plt.tight_layout()
     plt.savefig('comparision_evaluation.jpg', dpi=300)
+    '''
