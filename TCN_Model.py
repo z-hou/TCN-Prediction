@@ -90,6 +90,7 @@ class TCN(nn.Module):
             out_channels = num_channels[i]  # the output channels of each layer
             layers += [TemporalBlock(in_channels, out_channels, kernel_size, stride=1, dilation=dilation_size,
                                      padding=(kernel_size - 1) * dilation_size, dropout=dropout)]
+        print("Hoe many tCN blocks: ", len(layers))#3
 
         self.network = nn.Sequential(*layers)
         self.fc = nn.Linear(num_channels[-1], output_size)
@@ -103,23 +104,6 @@ class TCN(nn.Module):
         out = self.fc(x[:,:,-1])
         return out
 
-
-class TCN_LSTM(nn.Module):
-    def __init__(self):
-        super(TCN_LSTM, self).__init__()
-        self.tcn = TCN(num_inputs=7, channels=[32, 32, 32])
-        self.lstm = nn.LSTM(input_size=32, hidden_size=64,
-                            num_layers=2, batch_first=True)
-        self.fc = nn.Linear(64, 1)
-
-    def forward(self, x):
-        x = x.permute(0, 2, 1)  # b i s
-        x = self.tcn(x)  # b h s
-        x = x.permute(0, 2, 1)  # b s h
-        x, _ = self.lstm(x)  # b, s, h
-        x = x[:, -1, :]
-        x = self.fc(x)  # b output_size
-        return x
 
 
 if __name__ == "__main__":

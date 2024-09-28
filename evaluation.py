@@ -24,7 +24,7 @@ if __name__ == '__main__':
     if os.path.exists("./data/workload_series.npy") and os.path.exists("./data/scalers_dict.pkl"):
         print("Load Normalized series data from ./data/workload_series.npy")
         print("Load saved scaler from ./data/scalers_dict.pkl")
-        All_Series = np.load('./data/workload_series.npy')
+        All_Series = np.load('/proj/zhou-cognit/users/x_zhozh/project/workload-prediction/data/workload_series.npy')
         with open('./data/scalers_dict.pkl', 'rb') as f:
             scalers = pickle.load(f)
     else:
@@ -68,8 +68,8 @@ if __name__ == '__main__':
     net_pred = np.clip(net_pred, 0, None)
 
     ##Get random index for easier visualization
-    #indexs = np.random.randint(1, cpu_label.shape[0], size=10).tolist()
-    indexs = [8967, 10829, 5735, 16448, 11357, 15307, 10854, 282, 14062, 11271]
+    indexs = np.random.randint(1, cpu_label.shape[0], size=10).tolist()
+    #indexs = [8967, 10829, 5735, 16448, 11357, 15307, 10854, 282, 14062, 11271]
     print("indexs: ", indexs)
 
     cpu_pred_v = cpu_pred[indexs].flatten() # shape = (10,4) => (40,)
